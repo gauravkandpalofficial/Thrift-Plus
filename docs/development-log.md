@@ -57,3 +57,35 @@ Record the actual results of `npm run lint` and `npm run build` here.
 
 ### Next Milestone
 Create the Node.js and Express backend with a health-check API endpoint.
+
+
+## Milestone 2: Initial Backend Setup
+
+**Status:** Completed and manually tested.
+
+### Technologies
+- Node.js
+- Express.js
+- Nodemon
+
+### Features implemented
+- Created a separate backend application.
+- Initialized the backend using npm.
+- Installed Express.js and Nodemon.
+- Created the server.js entry point.
+- Implemented the welcome API route (`GET /`).
+- Implemented the health-check API route (`GET /api/health`).
+
+### API Testing
+- [x] GET / — Returns the welcome message.
+- [x] GET /api/health — Returns a successful health-check response.
+- [x] Backend server starts successfully on port 5000.
+
+### Current Limitations
+- No database connected yet.
+- No user authentication.
+- No real product API.
+- No connection between React and Express yet.
+
+### Next Milestone
+Build the product API and understand how the React frontend communicates with the backend.
