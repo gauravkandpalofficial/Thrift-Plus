@@ -89,3 +89,39 @@ Create the Node.js and Express backend with a health-check API endpoint.
 
 ### Next Milestone
 Build the product API and understand how the React frontend communicates with the backend.
+
+
+## Milestone 3: Product API Development
+
+**Status:** Completed and manually tested.
+
+### Features implemented
+- Created a separate product data file (`backend/data/products.js`).
+- Added six sample clothing products.
+- Created product routes (`backend/routes/productRoutes.js`).
+- Connected product routes to the Express server.
+- Implemented an API to retrieve all products.
+- Implemented an API to retrieve an individual product by ID.
+- Added a 404 response for products that do not exist.
+
+### API Endpoints
+
+| Method | Endpoint | Purpose |
+|---|---|---|
+| GET | `/api/products` | Retrieve all products |
+| GET | `/api/products/:id` | Retrieve one product by ID |
+
+### Testing Results
+- [x] All six products returned successfully.
+- [x] Individual product retrieved successfully.
+- [x] Invalid product ID returned a 404 response.
+- [x] All API endpoints tested manually in the browser.
+
+### Current Limitations
+- Product data is stored in a JavaScript array.
+- Products are not stored in a permanent database.
+- No product creation, editing or deletion API yet.
+- React frontend is not connected to the backend product API yet.
+
+### Next Milestone
+Connect the React frontend to the Express backend using HTTP requests and the Fetch API.
