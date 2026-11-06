@@ -125,3 +125,36 @@ Build the product API and understand how the React frontend communicates with th
 
 ### Next Milestone
 Connect the React frontend to the Express backend using HTTP requests and the Fetch API.
+
+
+## Milestone 4 — Frontend and Backend Integration
+
+**Status:** Completed
+
+### Work completed
+- Installed and configured CORS in the Express backend.
+- Connected the React frontend with the Express API.
+- Replaced the hardcoded frontend product array with API-fetched product data.
+- Implemented React loading and error states.
+- Added a retry button to fetch products again after a failed request.
+- Preserved existing homepage design, search, category filters and product details.
+
+### Testing completed
+- Verified all six products load from the backend.
+- Tested category filtering and product search.
+- Tested product detail popup.
+- Tested closing the popup.
+- Tested backend connection failure.
+- Verified the error message and retry functionality.
+- Confirmed that products load again after restarting the backend.
+
+### Technical concepts learned
+- React useEffect and useState
+- Fetch API
+- HTTP requests and JSON responses
+- Express API integration
+- CORS
+- Loading and error handling
+- AbortController
+
+**Next milestone:** Database integration using PostgreSQL.
