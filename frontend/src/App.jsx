@@ -1,76 +1,64 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
 
-const products = [
-  {
-    id: 1,
-    name: "Classic Denim Jacket",
-    category: "Jackets",
-    price: 499,
-    condition: "Like New",
-    brand: "Denim Co.",
-    image:
-      "https://images.unsplash.com/photo-1543076447-215ad9ba6923?auto=format&fit=crop&w=700&q=80",
-  },
-  {
-    id: 2,
-    name: "Everyday White Shirt",
-    category: "Shirts",
-    price: 249,
-    condition: "Very Good",
-    brand: "Unbranded",
-    image:
-      "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=700&q=80",
-  },
-  {
-    id: 3,
-    name: "Relaxed Fit T-Shirt",
-    category: "T-Shirts",
-    price: 129,
-    condition: "Good",
-    brand: "Unbranded",
-    image:
-      "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=700&q=80",
-  },
-  {
-    id: 4,
-    name: "Everyday Blue Jeans",
-    category: "Jeans",
-    price: 399,
-    condition: "Very Good",
-    brand: "Urban Wear",
-    image:
-      "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&w=700&q=80",
-  },
-  {
-    id: 5,
-    name: "Soft Cotton Shirt",
-    category: "Shirts",
-    price: 179,
-    condition: "Good",
-    brand: "Unbranded",
-    image:
-      "https://images.unsplash.com/photo-1603252109303-2751441dd157?auto=format&fit=crop&w=700&q=80",
-  },
-  {
-    id: 6,
-    name: "Casual Denim Jacket",
-    category: "Jackets",
-    price: 699,
-    condition: "Like New",
-    brand: "Urban Wear",
-    image:
-      "https://images.unsplash.com/photo-1551028719-00167b16eac5?auto=format&fit=crop&w=700&q=80",
-  },
-];
 
 const categories = ["All", "Shirts", "T-Shirts", "Jeans", "Jackets"];
 
 function App() {
-  const [search, setSearch] = useState("");
-  const [activeCategory, setActiveCategory] = useState("All");
-  const [selectedProduct, setSelectedProduct] = useState(null);
+  
+const [products, setProducts] = useState([]);
+const [search, setSearch] = useState("");
+const [activeCategory, setActiveCategory] = useState("All");
+const [selectedProduct, setSelectedProduct] = useState(null);
+
+const [loading, setLoading] = useState(true);
+const [error, setError] = useState("");
+const [retryCount, setRetryCount] = useState(0);
+
+// Fetch products from the backend
+useEffect(() => {
+  const controller = new AbortController();
+
+  async function fetchProducts() {
+    try {
+      setLoading(true);
+      setError("");
+
+      const response = await fetch(
+        "http://localhost:5000/api/products",
+        { signal: controller.signal }
+      );
+
+      if (!response.ok) {
+        throw new Error("Unable to fetch products.");
+      }
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error("Product data could not be loaded.");
+      }
+
+      setProducts(data.products);
+    } catch (err) {
+      if (err.name !== "AbortError") {
+        setError(err.message || "Something went wrong.");
+      }
+    } finally {
+      if (!controller.signal.aborted) {
+        setLoading(false);
+      }
+    }
+  }
+
+  fetchProducts();
+
+  return () => {
+    controller.abort();
+  };
+}, [retryCount]);
+
 
   const filteredProducts = products.filter((product) => {
     const matchesSearch =
@@ -205,48 +193,76 @@ function App() {
             </label>
           </div>
 
-          {filteredProducts.length > 0 ? (
-            <div className="product-grid">
-              {filteredProducts.map((product) => (
-                <button
-                  className="product-card"
-                  key={product.id}
-                  onClick={() => setSelectedProduct(product)}
-                  aria-label={`View ${product.name}`}
-                >
-                  <div className="product-image-wrap">
-                    <img src={product.image} alt={product.name} loading="lazy" />
-                    <span className="condition-tag">{product.condition}</span>
-                    <span className="view-tag">View piece ↗</span>
-                  </div>
-                  <div className="product-info">
-                    <div>
-                      <p className="product-category">{product.category}</p>
-                      <h3>{product.name}</h3>
-                      <p className="product-brand">{product.brand}</p>
-                    </div>
-                    <strong className="product-price">
-                      ₹{product.price}
-                    </strong>
-                  </div>
-                </button>
-              ))}
-            </div>
-          ) : (
-            <div className="empty-state">
-              <h3>No pieces found</h3>
-              <p>Try another search or choose a different category.</p>
-              <button
-                className="primary-button"
-                onClick={() => {
-                  setSearch("");
-                  setActiveCategory("All");
-                }}
-              >
-                Clear filters
-              </button>
-            </div>
-          )}
+          
+{loading ? (
+  <div className="empty-state">
+    <h3>Loading products...</h3>
+    <p>Please wait while we fetch the collection.</p>
+  </div>
+) : error ? (
+  <div className="empty-state">
+    <h3>Unable to load products</h3>
+    <p>{error}</p>
+
+    <button
+      className="primary-button"
+      onClick={() => setRetryCount((count) => count + 1)}
+    >
+      Try again
+    </button>
+  </div>
+) : filteredProducts.length > 0 ? (
+  <div className="product-grid">
+    {filteredProducts.map((product) => (
+      <button
+        className="product-card"
+        key={product.id}
+        onClick={() => setSelectedProduct(product)}
+        aria-label={`View ${product.name}`}
+      >
+        <div className="product-image-wrap">
+          <img
+            src={product.image}
+            alt={product.name}
+            loading="lazy"
+          />
+          <span className="condition-tag">
+            {product.condition}
+          </span>
+          <span className="view-tag">View piece ↗</span>
+        </div>
+
+        <div className="product-info">
+          <div>
+            <p className="product-category">{product.category}</p>
+            <h3>{product.name}</h3>
+            <p className="product-brand">{product.brand}</p>
+          </div>
+
+          <strong className="product-price">
+            ₹{product.price}
+          </strong>
+        </div>
+      </button>
+    ))}
+  </div>
+) : (
+  <div className="empty-state">
+    <h3>No pieces found</h3>
+    <p>Try another search or choose a different category.</p>
+
+    <button
+      className="primary-button"
+      onClick={() => {
+        setSearch("");
+        setActiveCategory("All");
+      }}
+    >
+      Clear filters
+    </button>
+  </div>
+)}
+
         </section>
 
         <footer className="footer">
