@@ -1,37 +1,69 @@
-
 const express = require("express");
 const router = express.Router();
 
-const products = require("../data/products");
+const pool = require("../config/db");
 
-// GET: Fetch all products
-router.get("/", (req, res) => {
-  res.status(200).json({
-    success: true,
-    count: products.length,
-    products: products,
-  });
-});
+// GET: Fetch all products from PostgreSQL
+router.get("/", async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT * FROM products ORDER BY created_at DESC"
+    );
 
-// GET: Fetch a single product by ID
-router.get("/:id", (req, res) => {
-  const productId = Number(req.params.id);
+    res.status(200).json({
+      success: true,
+      count: result.rows.length,
+      products: result.rows,
+    });
 
-  const product = products.find(
-    (item) => item.id === productId
-  );
+  } catch (error) {
+    console.error("Error fetching products:", error.message);
 
-  if (!product) {
-    return res.status(404).json({
+    res.status(500).json({
       success: false,
-      message: "Product not found",
+      message: "Unable to fetch products",
     });
   }
+});
 
-  res.status(200).json({
-    success: true,
-    product: product,
-  });
+
+// GET: Fetch a single product by ID from PostgreSQL
+router.get("/:id", async (req, res) => {
+  try {
+    const productId = Number(req.params.id);
+
+    if (!Number.isInteger(productId) || productId <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid product ID",
+      });
+    }
+
+    const result = await pool.query(
+      "SELECT * FROM products WHERE id = $1",
+      [productId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      product: result.rows[0],
+    });
+
+  } catch (error) {
+    console.error("Error fetching product:", error.message);
+
+    res.status(500).json({
+      success: false,
+      message: "Unable to fetch product",
+    });
+  }
 });
 
 module.exports = router;
