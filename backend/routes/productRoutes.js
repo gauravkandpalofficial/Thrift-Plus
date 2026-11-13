@@ -3,11 +3,33 @@ const router = express.Router();
 
 const pool = require("../config/db");
 
+// Return database columns in a shape the frontend already understands.
+// image_url AS image keeps the photo URL in PostgreSQL, but sends it as "image" in JSON.
+const productSelect = `
+  SELECT
+    id,
+    seller_id,
+    name,
+    description,
+    category,
+    gender,
+    brand,
+    price,
+    condition,
+    image_url AS image,
+    review_status,
+    approved_min_price,
+    approved_max_price,
+    status,
+    created_at
+  FROM products
+`;
+
 // GET: Fetch all products from PostgreSQL
 router.get("/", async (req, res) => {
   try {
     const result = await pool.query(
-      "SELECT * FROM products ORDER BY created_at DESC"
+      `${productSelect} ORDER BY created_at DESC`
     );
 
     res.status(200).json({
@@ -40,7 +62,7 @@ router.get("/:id", async (req, res) => {
     }
 
     const result = await pool.query(
-      "SELECT * FROM products WHERE id = $1",
+      `${productSelect} WHERE id = $1`,
       [productId]
     );
 

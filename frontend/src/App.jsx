@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import "./App.css";
 
 
-const categories = ["All", "Shirts", "T-Shirts", "Jeans", "Jackets"];
+const categories = ["All", "Shirts", "T-Shirts", "Jeans", "Shorts", "Jackets"];
 
 function App() {
   
@@ -36,7 +36,7 @@ useEffect(() => {
 
       const data = await response.json();
 
-      if (!data.success) {
+      if (!data.success || !Array.isArray(data.products)) {
         throw new Error("Product data could not be loaded.");
       }
 
@@ -60,10 +60,13 @@ useEffect(() => {
 }, [retryCount]);
 
 
+  const searchText = search.toLowerCase().trim();
+
   const filteredProducts = products.filter((product) => {
     const matchesSearch =
-      product.name.toLowerCase().includes(search.toLowerCase()) ||
-      product.category.toLowerCase().includes(search.toLowerCase());
+      !searchText ||
+      product.name.toLowerCase().includes(searchText) ||
+      product.category.toLowerCase().includes(searchText);
 
     const matchesCategory =
       activeCategory === "All" || product.category === activeCategory;
@@ -156,7 +159,7 @@ useEffect(() => {
               <p className="eyebrow">THE THRIFT+ EDIT</p>
               <h2>Good things, found.</h2>
               <p className="section-description">
-                Explore our sample collection of everyday favourites.
+                Explore clothing listed on Thrift+, loaded from the live catalog.
               </p>
             </div>
             <span className="product-count">
@@ -228,6 +231,9 @@ useEffect(() => {
           />
           <span className="condition-tag">
             {product.condition}
+          </span>
+          <span className="gender-tag">
+            {product.gender}
           </span>
           <span className="view-tag">View piece ↗</span>
         </div>
@@ -302,11 +308,18 @@ useEffect(() => {
                 ₹{selectedProduct.price}
               </strong>
               <p>
+                For: <strong>{selectedProduct.gender}</strong>
+              </p>
+              <p>
                 Condition: <strong>{selectedProduct.condition}</strong>
               </p>
+              {selectedProduct.description ? (
+                <p>{selectedProduct.description}</p>
+              ) : null}
               <p className="prototype-note">
-                This is sample product data. Seller details, availability,
-                verified reviews and checkout will be added in later milestones.
+                Product details are loaded from the Thrift+ catalog.
+                Seller accounts, verified reviews and checkout will be added
+                in later milestones.
               </p>
               <button
                 className="primary-button"

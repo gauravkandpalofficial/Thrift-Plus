@@ -25,7 +25,15 @@ CREATE TABLE IF NOT EXISTS products (
 
     name VARCHAR(150) NOT NULL,
     description TEXT,
-    category VARCHAR(50) NOT NULL,
+
+    category VARCHAR(50) NOT NULL
+        CHECK (category IN (
+            'Shirts', 'T-Shirts', 'Jeans', 'Shorts', 'Jackets'
+        )),
+
+    gender VARCHAR(20) NOT NULL DEFAULT 'Unisex'
+        CHECK (gender IN ('Men', 'Women', 'Unisex')),
+
     brand VARCHAR(100) DEFAULT 'Unbranded',
 
     price NUMERIC(10, 2) NOT NULL CHECK (price >= 0),
@@ -124,6 +132,9 @@ ON products(seller_id);
 
 CREATE INDEX IF NOT EXISTS idx_products_category
 ON products(category);
+
+CREATE INDEX IF NOT EXISTS idx_products_gender
+ON products(gender);
 
 CREATE INDEX IF NOT EXISTS idx_products_status
 ON products(status);

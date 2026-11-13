@@ -372,15 +372,23 @@
   transform: scale(1.04);
 }
 
-.condition-tag {
+.condition-tag,
+.gender-tag {
   position: absolute;
   top: 12px;
-  left: 12px;
   padding: 8px 10px;
   background: #fffefa;
   color: #454b43;
   border-radius: 3px;
   font-size: 9px;
+}
+
+.condition-tag {
+  left: 12px;
+}
+
+.gender-tag {
+  right: 12px;
 }
 
 .view-tag {
