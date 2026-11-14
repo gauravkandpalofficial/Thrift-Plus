@@ -6,58 +6,119 @@ import "./App.css";
 const categories = ["All", "Shirts", "T-Shirts", "Jeans", "Shorts", "Jackets"];
 
 function App() {
-  
-const [products, setProducts] = useState([]);
-const [search, setSearch] = useState("");
-const [activeCategory, setActiveCategory] = useState("All");
-const [selectedProduct, setSelectedProduct] = useState(null);
 
-const [loading, setLoading] = useState(true);
-const [error, setError] = useState("");
-const [retryCount, setRetryCount] = useState(0);
+  const [products, setProducts] = useState([]);
+  const [search, setSearch] = useState("");
+  const [activeCategory, setActiveCategory] = useState("All");
+  const [selectedProduct, setSelectedProduct] = useState(null);
 
-// Fetch products from the backend
-useEffect(() => {
-  const controller = new AbortController();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [retryCount, setRetryCount] = useState(0);
 
-  async function fetchProducts() {
-    try {
-      setLoading(true);
-      setError("");
+  // Product details modal states
+  const [detailProduct, setDetailProduct] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState("");
 
-      const response = await fetch(
-        "http://localhost:5000/api/products",
-        { signal: controller.signal }
-      );
+  const [detailRetryCount, setDetailRetryCount] = useState(0);
 
-      if (!response.ok) {
-        throw new Error("Unable to fetch products.");
-      }
+  // Fetch products from the backend
+  useEffect(() => {
+    const controller = new AbortController();
 
-      const data = await response.json();
+    async function fetchProducts() {
+      try {
+        setLoading(true);
+        setError("");
 
-      if (!data.success || !Array.isArray(data.products)) {
-        throw new Error("Product data could not be loaded.");
-      }
+        const response = await fetch(
+          "http://localhost:5000/api/products",
+          { signal: controller.signal }
+        );
 
-      setProducts(data.products);
-    } catch (err) {
-      if (err.name !== "AbortError") {
-        setError(err.message || "Something went wrong.");
-      }
-    } finally {
-      if (!controller.signal.aborted) {
-        setLoading(false);
+        if (!response.ok) {
+          throw new Error("Unable to fetch products.");
+        }
+
+        const data = await response.json();
+
+        if (!data.success || !Array.isArray(data.products)) {
+          throw new Error("Product data could not be loaded.");
+        }
+
+        setProducts(data.products);
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          setError(err.message || "Something went wrong.");
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
       }
     }
-  }
 
-  fetchProducts();
+    fetchProducts();
 
-  return () => {
-    controller.abort();
-  };
-}, [retryCount]);
+    return () => {
+      controller.abort();
+    };
+  }, [retryCount]);
+
+
+  // Fetch complete details of the selected product
+  useEffect(() => {
+    if (!selectedProduct) {
+      setDetailProduct(null);
+      setDetailError("");
+      setDetailLoading(false);
+      return;
+    }
+
+    const controller = new AbortController();
+
+    async function fetchProductDetails() {
+      try {
+        setDetailLoading(true);
+        setDetailError("");
+        setDetailProduct(null);
+
+        const response = await fetch(
+          `http://localhost:5000/api/products/${selectedProduct.id}`,
+          { signal: controller.signal }
+        );
+
+        if (!response.ok) {
+          throw new Error("Unable to fetch product details.");
+        }
+
+        const data = await response.json();
+
+        if (!data.success || !data.product) {
+          throw new Error("Product details could not be loaded.");
+        }
+
+        setDetailProduct(data.product);
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          setDetailError(
+            err.message || "Something went wrong while loading details."
+          );
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setDetailLoading(false);
+        }
+      }
+    }
+
+    fetchProductDetails();
+
+    return () => {
+      controller.abort();
+    };
+  }, [selectedProduct?.id, detailRetryCount]);
 
 
   const searchText = search.toLowerCase().trim();
@@ -73,6 +134,8 @@ useEffect(() => {
 
     return matchesSearch && matchesCategory;
   });
+
+  const displayProduct = detailProduct || selectedProduct;
 
   return (
     <div className="app">
@@ -196,78 +259,78 @@ useEffect(() => {
             </label>
           </div>
 
-          
-{loading ? (
-  <div className="empty-state">
-    <h3>Loading products...</h3>
-    <p>Please wait while we fetch the collection.</p>
-  </div>
-) : error ? (
-  <div className="empty-state">
-    <h3>Unable to load products</h3>
-    <p>{error}</p>
 
-    <button
-      className="primary-button"
-      onClick={() => setRetryCount((count) => count + 1)}
-    >
-      Try again
-    </button>
-  </div>
-) : filteredProducts.length > 0 ? (
-  <div className="product-grid">
-    {filteredProducts.map((product) => (
-      <button
-        className="product-card"
-        key={product.id}
-        onClick={() => setSelectedProduct(product)}
-        aria-label={`View ${product.name}`}
-      >
-        <div className="product-image-wrap">
-          <img
-            src={product.image}
-            alt={product.name}
-            loading="lazy"
-          />
-          <span className="condition-tag">
-            {product.condition}
-          </span>
-          <span className="gender-tag">
-            {product.gender}
-          </span>
-          <span className="view-tag">View piece ↗</span>
-        </div>
+          {loading ? (
+            <div className="empty-state">
+              <h3>Loading products...</h3>
+              <p>Please wait while we fetch the collection.</p>
+            </div>
+          ) : error ? (
+            <div className="empty-state">
+              <h3>Unable to load products</h3>
+              <p>{error}</p>
 
-        <div className="product-info">
-          <div>
-            <p className="product-category">{product.category}</p>
-            <h3>{product.name}</h3>
-            <p className="product-brand">{product.brand}</p>
-          </div>
+              <button
+                className="primary-button"
+                onClick={() => setRetryCount((count) => count + 1)}
+              >
+                Try again
+              </button>
+            </div>
+          ) : filteredProducts.length > 0 ? (
+            <div className="product-grid">
+              {filteredProducts.map((product) => (
+                <button
+                  className="product-card"
+                  key={product.id}
+                  onClick={() => setSelectedProduct(product)}
+                  aria-label={`View ${product.name}`}
+                >
+                  <div className="product-image-wrap">
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      loading="lazy"
+                    />
+                    <span className="condition-tag">
+                      {product.condition}
+                    </span>
+                    <span className="gender-tag">
+                      {product.gender}
+                    </span>
+                    <span className="view-tag">View piece ↗</span>
+                  </div>
 
-          <strong className="product-price">
-            ₹{product.price}
-          </strong>
-        </div>
-      </button>
-    ))}
-  </div>
-) : (
-  <div className="empty-state">
-    <h3>No pieces found</h3>
-    <p>Try another search or choose a different category.</p>
+                  <div className="product-info">
+                    <div>
+                      <p className="product-category">{product.category}</p>
+                      <h3>{product.name}</h3>
+                      <p className="product-brand">{product.brand}</p>
+                    </div>
 
-    <button
-      className="primary-button"
-      onClick={() => {
-        setSearch("");
-        setActiveCategory("All");
-      }}
-    >
-      Clear filters
-    </button>
-  </div>
-)}
+                    <strong className="product-price">
+                      ₹{product.price}
+                    </strong>
+                  </div>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="empty-state">
+              <h3>No pieces found</h3>
+              <p>Try another search or choose a different category.</p>
+
+              <button
+                className="primary-button"
+                onClick={() => {
+                  setSearch("");
+                  setActiveCategory("All");
+                }}
+              >
+                Clear filters
+              </button>
+            </div>
+          )}
 
         </section>
 
@@ -299,41 +362,76 @@ useEffect(() => {
             >
               ×
             </button>
-            <img src={selectedProduct.image} alt={selectedProduct.name} />
+
+            {detailLoading && (
+              <p className="detail-status">
+                Loading complete product details...
+              </p>
+            )}
+
+            {detailError && (
+              <div className="detail-status">
+                <p>{detailError}</p>
+
+                <button
+                  className="primary-button"
+                  onClick={() => setDetailRetryCount(count => count + 1)}
+                >
+                  Retry
+                </button>
+              </div>
+            )}
+
+            <img
+              src={displayProduct.image}
+              alt={displayProduct.name}
+            />
+
             <div className="modal-details">
-              <p className="eyebrow">{selectedProduct.category}</p>
-              <h2 id="modal-title">{selectedProduct.name}</h2>
-              <p className="modal-brand">{selectedProduct.brand}</p>
+              <p className="eyebrow">{displayProduct.category}</p>
+
+              <h2 id="modal-title">{displayProduct.name}</h2>
+
+              <p className="modal-brand">{displayProduct.brand}</p>
+
               <strong className="modal-price">
-                ₹{selectedProduct.price}
+                ₹{displayProduct.price}
               </strong>
+
               <p>
-                For: <strong>{selectedProduct.gender}</strong>
+                For: <strong>{displayProduct.gender}</strong>
               </p>
+
               <p>
-                Condition: <strong>{selectedProduct.condition}</strong>
+                Condition: <strong>{displayProduct.condition}</strong>
               </p>
-              {selectedProduct.description ? (
-                <p>{selectedProduct.description}</p>
+
+              {displayProduct.description ? (
+                <p>{displayProduct.description}</p>
               ) : null}
+
               <p className="prototype-note">
                 Product details are loaded from the Thrift+ catalog.
                 Seller accounts, verified reviews and checkout will be added
                 in later milestones.
               </p>
-              <button
-                className="primary-button"
-                onClick={() =>
-                  window.alert("Checkout will be implemented in a later milestone.")
-                }
-              >
-                Continue exploring
-              </button>
             </div>
+
+
+
+            <button
+              className="primary-button"
+              onClick={() =>
+                window.alert("Checkout will be implemented in a later milestone.")
+              }
+            >
+              Continue exploring
+            </button>
           </section>
-        </div>
-      )}
-    </div>
+        </div >
+      )
+      }
+    </div >
   );
 }
 
