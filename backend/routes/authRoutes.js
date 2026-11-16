@@ -101,4 +101,155 @@ router.post("/register", async (req, res) => {
   }
 });
 
+// POST /api/auth/login
+router.post("/login", async (req, res) => {
+  const { email, password } = req.body || {};
+
+  // Login needs both fields. Do not trim the password because spaces may be intentional.
+  if (
+    typeof email !== "string" ||
+    typeof password !== "string" ||
+    email.trim().length === 0 ||
+    password.length === 0
+  ) {
+    return res.status(400).json({
+      success: false,
+      message: "Email and password are required.",
+    });
+  }
+
+  const normalizedEmail = email.trim().toLowerCase();
+
+  if (normalizedEmail.length > 150 || !emailPattern.test(normalizedEmail)) {
+    return res.status(400).json({
+      success: false,
+      message: "Please provide a valid email address.",
+    });
+  }
+
+  try {
+    // Parameterized SQL safely looks up the account by its normalized email.
+    const result = await pool.query(
+      `SELECT id, full_name, email, password_hash, role
+       FROM users
+       WHERE LOWER(email) = $1
+       LIMIT 1`,
+      [normalizedEmail]
+    );
+
+    const user = result.rows[0];
+
+    // Use the same response for an unknown email and a wrong password.
+    if (!user || !(await bcrypt.compare(password, user.password_hash))) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid email or password.",
+      });
+    }
+
+    // Replace the existing session ID to prevent session fixation.
+    req.session.regenerate((regenerateError) => {
+      if (regenerateError) {
+        console.error("Unable to regenerate login session:", regenerateError.message);
+        return res.status(500).json({
+          success: false,
+          message: "Unable to log in right now.",
+        });
+      }
+
+      // Store only the safe account details needed by later protected routes.
+      req.session.user = {
+        id: user.id,
+        full_name: user.full_name,
+        email: user.email,
+        role: user.role,
+      };
+
+      // Wait for PostgreSQL to save the session before confirming login.
+      req.session.save((saveError) => {
+        if (saveError) {
+          console.error("Unable to save login session:", saveError.message);
+          return res.status(500).json({
+            success: false,
+            message: "Unable to log in right now.",
+          });
+        }
+
+        return res.status(200).json({
+          success: true,
+          user: req.session.user,
+        });
+      });
+    });
+  } catch (error) {
+    console.error("Login failed:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Unable to log in right now.",
+    });
+  }
+});
+
+// GET /api/auth/me
+router.get("/me", (req, res) => {
+  // A session can exist without a logged-in user, so check the user data itself.
+  if (!req.session || !req.session.user) {
+    return res.status(401).json({
+      success: false,
+      message: "You are not logged in.",
+    });
+  }
+
+  // Return only the safe fields that login stored in the session.
+  const { id, full_name, email, role } = req.session.user;
+
+  return res.status(200).json({
+    success: true,
+    user: { id, full_name, email, role },
+  });
+});
+
+// POST /api/auth/logout
+router.post("/logout", (req, res) => {
+  // Match these options to the cookie configured in server.js so the browser
+  // clears the same cookie (including its path) that login created.
+  const cookieOptions = {
+    path: "/",
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+  };
+
+  const clearSessionCookie = () => {
+    res.clearCookie("connect.sid", cookieOptions);
+  };
+
+  // Be tolerant if the request has no Express session at all.
+  if (!req.session) {
+    clearSessionCookie();
+    return res.status(200).json({
+      success: true,
+      message: "Logged out successfully.",
+    });
+  }
+
+  // Destroy removes this session from PostgreSQL, so its old cookie cannot log in again.
+  req.session.destroy((error) => {
+    clearSessionCookie();
+
+    if (error) {
+      console.error("Unable to destroy logout session:", error.message);
+      return res.status(500).json({
+        success: false,
+        message: "Unable to log out right now.",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Logged out successfully.",
+    });
+  });
+});
+
 module.exports = router;
