@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/useAuth.js";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function RegisterPage() {
   const navigate = useNavigate();
+  const { setUser } = useAuth();
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -72,6 +74,8 @@ function RegisterPage() {
       }
 
       // Pass a one-time message to the login page after successful registration.
+      // Registration does not log the visitor in.
+      setUser(null);
       navigate("/login", {
         state: { registrationMessage: "Your account is ready. Please log in." },
       });

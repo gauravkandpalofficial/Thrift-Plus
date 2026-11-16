@@ -34,6 +34,8 @@ CREATE TABLE IF NOT EXISTS products (
     gender VARCHAR(20) NOT NULL DEFAULT 'Unisex'
         CHECK (gender IN ('Men', 'Women', 'Unisex')),
 
+    size VARCHAR(30),
+
     brand VARCHAR(100) DEFAULT 'Unbranded',
 
     price NUMERIC(10, 2) NOT NULL CHECK (price >= 0),

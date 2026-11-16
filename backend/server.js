@@ -9,6 +9,7 @@ const PORT = 5000;
 // Import product routes
 const productRoutes = require("./routes/productRoutes");
 const authRoutes = require("./routes/authRoutes");
+const sellerRoutes = require("./routes/sellerRoutes");
 
 const pool = require("./config/db");
 
@@ -74,6 +75,9 @@ app.get("/api/db-test", async (req, res) => {
 
 // Product routes
 app.use("/api/products", productRoutes);
+
+// Seller-only product management routes
+app.use("/api/seller", sellerRoutes);
 
 // Buyer and seller registration route
 app.use("/api/auth", authRoutes);

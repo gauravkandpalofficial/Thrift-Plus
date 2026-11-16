@@ -1,11 +1,15 @@
 
 import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "./context/useAuth.js";
 import "./App.css";
 
 
 const categories = ["All", "Shirts", "T-Shirts", "Jeans", "Shorts", "Jackets"];
 
 function App() {
+  const { user, isCheckingSession, sessionError, logout } = useAuth();
+  const navigate = useNavigate();
 
   const [products, setProducts] = useState([]);
   const [search, setSearch] = useState("");
@@ -22,6 +26,17 @@ function App() {
   const [detailError, setDetailError] = useState("");
 
   const [detailRetryCount, setDetailRetryCount] = useState(0);
+  const [logoutError, setLogoutError] = useState("");
+
+  async function handleLogout() {
+    setLogoutError("");
+    try {
+      await logout();
+      navigate("/", { replace: true });
+    } catch (error) {
+      setLogoutError(error.message || "Unable to log out right now.");
+    }
+  }
 
   // Fetch products from the backend
   useEffect(() => {
@@ -140,19 +155,43 @@ function App() {
   return (
     <div className="app">
       <header className="navbar">
-        <a className="brand" href="#" onClick={() => setSelectedProduct(null)}>
+        <Link className="brand" to="/" onClick={() => setSelectedProduct(null)}>
           thrift<span>+</span>
-        </a>
+        </Link>
 
         <nav className="nav-links">
           <a href="#discover">Discover</a>
           <a href="#how-it-works">How it works</a>
         </nav>
 
+        <div className="nav-account">
+          {isCheckingSession ? (
+            <span className="nav-session-status" aria-live="polite">Checking account…</span>
+          ) : user ? (
+            <>
+              <div className="nav-user-info">
+                <strong className="nav-user-name">{user.full_name}</strong>
+                <span className="nav-user-role">
+                  {user.role ? `${user.role[0].toUpperCase()}${user.role.slice(1)}` : "Member"}
+                </span>
+              </div>
+              <button className="nav-logout" type="button" onClick={handleLogout}>Logout</button>
+            </>
+          ) : (
+            <>
+              <Link className="nav-login-link" to="/login">Login</Link>
+              <Link className="sell-link nav-register-link" to="/register">Create Account</Link>
+            </>
+          )}
+        </div>
         <a className="sell-link" href="#how-it-works">
           Sell your clothes <span>↗</span>
         </a>
       </header>
+
+      {(sessionError || logoutError) && (
+        <p className="nav-auth-error" role="alert">{logoutError || sessionError}</p>
+      )}
 
       <main>
         <section className="hero">

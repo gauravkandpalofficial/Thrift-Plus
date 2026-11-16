@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/useAuth.js";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function LoginPage() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { setUser } = useAuth();
   const registrationMessage = location.state?.registrationMessage;
 
   const [email, setEmail] = useState("");
@@ -48,7 +50,8 @@ function LoginPage() {
         return;
       }
 
-      // The browser keeps the session cookie; return to the existing catalogue.
+      // Update shared app state as well as the browser-held session cookie.
+      setUser(data.user);
       navigate("/", { replace: true });
     } catch {
       setError("Could not connect to Thrift+. Check that the backend is running and try again.");

@@ -29,7 +29,7 @@ const productSelect = `
 router.get("/", async (req, res) => {
   try {
     const result = await pool.query(
-      `${productSelect} ORDER BY created_at DESC`
+      `${productSelect} WHERE status = 'active' ORDER BY created_at DESC`
     );
 
     res.status(200).json({
@@ -62,7 +62,7 @@ router.get("/:id", async (req, res) => {
     }
 
     const result = await pool.query(
-      `${productSelect} WHERE id = $1`,
+      `${productSelect} WHERE status = 'active' AND id = $1`,
       [productId]
     );
 
