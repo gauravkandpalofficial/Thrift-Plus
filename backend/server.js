@@ -10,6 +10,8 @@ const PORT = 5000;
 const productRoutes = require("./routes/productRoutes");
 const authRoutes = require("./routes/authRoutes");
 const sellerRoutes = require("./routes/sellerRoutes");
+const adminRoutes = require("./routes/adminRoutes");
+const reviewerRoutes = require("./routes/reviewerRoutes");
 
 const pool = require("./config/db");
 
@@ -78,6 +80,12 @@ app.use("/api/products", productRoutes);
 
 // Seller-only product management routes
 app.use("/api/seller", sellerRoutes);
+
+// Admin-only account provisioning routes
+app.use("/api/admin", adminRoutes);
+
+// Reviewer-only product queue routes
+app.use("/api/reviewer", reviewerRoutes);
 
 // Buyer and seller registration route
 app.use("/api/auth", authRoutes);
