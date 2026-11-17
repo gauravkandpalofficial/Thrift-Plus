@@ -5,6 +5,9 @@ import './index.css'
 import App from './App.jsx'
 import LoginPage from './pages/LoginPage.jsx'
 import RegisterPage from './pages/RegisterPage.jsx'
+import SellerDashboardPage from './pages/SellerDashboardPage.jsx'
+import AddProductPage from './pages/AddProductPage.jsx'
+import RequireSeller from './components/RequireSeller.jsx'
 import { AuthProvider } from './context/AuthProvider.jsx'
 
 createRoot(document.getElementById('root')).render(
@@ -15,6 +18,10 @@ createRoot(document.getElementById('root')).render(
           <Route path="/" element={<App />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route element={<RequireSeller />}>
+            <Route path="/seller/dashboard" element={<SellerDashboardPage />} />
+            <Route path="/seller/add-product" element={<AddProductPage />} />
+          </Route>
         </Routes>
       </AuthProvider>
     </BrowserRouter>

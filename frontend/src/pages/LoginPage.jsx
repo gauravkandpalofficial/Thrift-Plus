@@ -3,12 +3,32 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth.js";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const sellerPaths = new Set(["/seller/dashboard", "/seller/add-product"]);
+
+function getSafeSellerRedirect(path) {
+  if (typeof path !== "string") {
+    return null;
+  }
+
+  try {
+    // Only allow a same-origin URL for one of our known seller routes.
+    const url = new URL(path, window.location.origin);
+    if (url.origin !== window.location.origin || !sellerPaths.has(url.pathname)) {
+      return null;
+    }
+
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return null;
+  }
+}
 
 function LoginPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const { setUser } = useAuth();
   const registrationMessage = location.state?.registrationMessage;
+  const returnTo = getSafeSellerRedirect(location.state?.from);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -52,7 +72,7 @@ function LoginPage() {
 
       // Update shared app state as well as the browser-held session cookie.
       setUser(data.user);
-      navigate("/", { replace: true });
+      navigate(returnTo || "/", { replace: true });
     } catch {
       setError("Could not connect to Thrift+. Check that the backend is running and try again.");
     } finally {

@@ -184,9 +184,15 @@ function App() {
             </>
           )}
         </div>
-        <a className="sell-link" href="#how-it-works">
-          Sell your clothes <span>↗</span>
-        </a>
+        {isCheckingSession ? (
+          <span className="sell-link nav-session-status" aria-live="polite">
+            Checking account…
+          </span>
+        ) : (
+          <Link className="sell-link" to={user ? "/seller/dashboard" : "/login"}>
+            Sell your clothes <span>↗</span>
+          </Link>
+        )}
       </header>
 
       {(sessionError || logoutError) && (
